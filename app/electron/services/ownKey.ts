@@ -25,8 +25,23 @@ export function hostOf(url: string): string {
   }
 }
 
-/** gpt-5.x and o-series models think before answering; low effort keeps answers fast. Other models reject the field. */
-export function reasoningFor(model: string): { reasoning_effort?: "low" } {
+/** Ollama by its default port or its name in the host. */
+function isOllama(baseUrl: string): boolean {
+  try {
+    const url = new URL(baseUrl)
+    return url.port === "11434" || /ollama/i.test(url.hostname)
+  } catch {
+    return false
+  }
+}
+
+/**
+ * gpt-5.x and o-series models think before answering; low effort keeps answers fast. Other models reject the field,
+ * except on Ollama, which accepts "none" for every model and otherwise lets thinking models (qwen3...) spend the
+ * whole answer on reasoning.
+ */
+export function reasoningFor(model: string, baseUrl = ""): { reasoning_effort?: "low" | "none" } {
+  if (isOllama(baseUrl)) return { reasoning_effort: "none" }
   const name = model.split("/").pop() ?? model
   return /^(gpt-5|o[1-9])/i.test(name) ? { reasoning_effort: "low" } : {}
 }
@@ -93,7 +108,7 @@ export class OwnKeyService {
     const storedKey = key ? this.deps.box.encrypt(key) : ""
     const client = new OpenAI({ apiKey: key || "none", baseURL: baseUrl, maxRetries: 0, timeout: 30_000, fetch: this.deps.fetch })
     try {
-      await client.chat.completions.create({ model, messages: [{ role: "user", content: "Reply with the word OK." }], ...reasoningFor(model) })
+      await client.chat.completions.create({ model, messages: [{ role: "user", content: "Reply with the word OK." }], ...reasoningFor(model, baseUrl) })
     } catch (err) {
       throw describeOwnKeyError(err, { baseUrl, model })
     }
