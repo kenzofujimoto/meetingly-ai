@@ -45,6 +45,11 @@ export function macZipFor(feed: Feed, arch: string): FeedFile | null {
   return feed.files.find((f) => f.url.endsWith(suffix)) ?? null
 }
 
+/** Only a packaged build updates itself, unless it was built with MEETINGLY_DISABLE_UPDATES=1 (a self-built fork). */
+export function updatesEnabled(isPackaged: boolean, disabledAtBuild: string): boolean {
+  return isPackaged && !/^(1|true)$/i.test(disabledAtBuild.trim())
+}
+
 /** A path as one single-quoted shell word. */
 export function shellQuote(value: string): string {
   return `'${value.replace(/'/g, `'\\''`)}'`

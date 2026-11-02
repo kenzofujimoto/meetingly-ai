@@ -23,7 +23,11 @@ export default defineConfig({
       main: {
         // The speech worker is its own entry: it runs in an Electron utility process.
         entry: { main: "electron/main.ts", "asr-worker": "electron/asr-worker.ts" },
-        vite: { build: { outDir: "dist-electron", rolldownOptions: { external } } }
+        vite: {
+          // MEETINGLY_DISABLE_UPDATES=1 builds an app that never replaces itself with the official release.
+          define: { __MEETINGLY_DISABLE_UPDATES__: JSON.stringify(process.env.MEETINGLY_DISABLE_UPDATES ?? "") },
+          build: { outDir: "dist-electron", rolldownOptions: { external } }
+        }
       },
       preload: {
         input: "electron/preload.ts",
