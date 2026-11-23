@@ -319,6 +319,32 @@ describe("the keyboard hook's thread", () => {
     expect(warnings.some((w) => /giving up/i.test(w))).toBe(true)
   })
 
+  it("retries when the thread cannot even start, and reports thread errors", () => {
+    let attempts = 0
+    const flaky = new LowLevelHotkeys({
+      workerFile: "hotkey-worker.js",
+      onAction: () => {},
+      log: { info: () => {}, warn: (m) => warnings.push(m) },
+      spawn: (_file, workerData) => {
+        attempts++
+        if (attempts === 1) throw new Error("no koffi")
+        const w = new FakeWorker(workerData.control, workerData)
+        workers.push(w)
+        return w
+      }
+    })
+    flaky.start([TOGGLE])
+    expect(flaky.running).toBe(false)
+    expect(warnings.some((w) => w.includes("no koffi"))).toBe(true)
+    vi.advanceTimersByTime(1500)
+    expect(flaky.running).toBe(true)
+    workers[0].emit("error", new Error("boom"))
+    workers[0].emit("message", { type: "error", message: "SetWindowsHookExW failed (5)" })
+    expect(warnings.some((w) => w.includes("boom"))).toBe(true)
+    expect(warnings.some((w) => w.includes("SetWindowsHookExW failed (5)"))).toBe(true)
+    flaky.stop()
+  })
+
   it("stops cleanly and does not come back", () => {
     hotkeys.start([TOGGLE])
     hotkeys.stop()
