@@ -9,6 +9,7 @@
  *   hook-after    Meetingly's hook installed after the lock: fires      (the fix)
  *   hook-before   lock engaged after Meetingly's hook: fires after the
  *                 next reinstall                                        (the fix, real-world order)
+ *   no-double     no lock: the hook takes the key, RegisterHotKey stays quiet (runs once)
  */
 import { spawn, spawnSync } from "node:child_process"
 import { once } from "node:events"
@@ -146,6 +147,20 @@ results.push(
     await hook.stop()
     lock.stop()
     return { ok: actions === 1 && hook.errors.length === 0, detail: `actions=${actions} (expected 1) ${hook.errors.join("; ")}` }
+  })
+)
+
+results.push(
+  await scenario("no-double", async () => {
+    // No lock: the OS hotkey is live too, but the hook takes the key first, so only one of them runs.
+    const lock = await startLock({ swallow: false })
+    const hook = await startHook()
+    sendChord()
+    await wait(400)
+    const actions = hook.actions()
+    await hook.stop()
+    lock.stop()
+    return { ok: actions === 1 && lock.hotkeys() === 0, detail: `actions=${actions} hotkeys=${lock.hotkeys()} (expected 1 and 0)` }
   })
 )
 
