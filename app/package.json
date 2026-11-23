@@ -21,7 +21,8 @@
     "smoke:listen": "node scripts/smoke.mjs listen",
     "smoke:cloud": "node scripts/smoke.mjs cloud",
     "fetch:asr": "node scripts/fetch-asr-native.mjs",
-    "smoke:asr": "node scripts/smoke.mjs asr"
+    "smoke:asr": "node scripts/smoke.mjs asr",
+    "check:hotkeys": "node scripts/hotkey-lock/check.mjs"
   },
   "build": {
     "appId": "com.aiprimetech.meetingly",

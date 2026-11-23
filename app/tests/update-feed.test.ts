@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { isNewer, macZipFor, parseFeed, shellQuote } from "../electron/update-feed"
+import { isNewer, macZipFor, parseFeed, shellQuote, updatesEnabled } from "../electron/update-feed"
 
 // What electron-builder wrote for the 1.1.0 Mac build.
 const LATEST_MAC = `version: 1.1.0
@@ -45,6 +45,14 @@ describe("update feed", () => {
     expect(isNewer("1.2.0-beta.3", "1.2.0")).toBe(false)
     expect(isNewer("1.2.0-beta.10", "1.2.0-beta.9")).toBe(true)
     expect(isNewer("v2.0.0", "1.9.0")).toBe(true)
+  })
+
+  it("updates only a packaged build that was not built with updates off", () => {
+    expect(updatesEnabled(true, "")).toBe(true)
+    expect(updatesEnabled(true, "0")).toBe(true)
+    expect(updatesEnabled(false, "")).toBe(false)
+    expect(updatesEnabled(true, "1")).toBe(false)
+    expect(updatesEnabled(true, "true")).toBe(false)
   })
 
   it("quotes paths for the install script", () => {

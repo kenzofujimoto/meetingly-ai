@@ -3,6 +3,10 @@ import { autoUpdater } from "electron-updater"
 import type { UpdateState } from "../shared/types"
 import type { Logger } from "./services/logger"
 import { MacUpdater, type MacUpdate } from "./mac-updater"
+import { updatesEnabled } from "./update-feed"
+
+/** MEETINGLY_DISABLE_UPDATES as it was when the app was built (vite.config.ts `define`). */
+declare const __MEETINGLY_DISABLE_UPDATES__: string
 
 const FEED_URL = "https://meetinglyai.com/download"
 const CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000
@@ -29,7 +33,10 @@ interface Deps {
  * MEETINGLY_UPDATE_URL points the app at another feed (the update test in CI).
  */
 export function startAutoUpdates(deps: Deps): void {
-  if (!app.isPackaged) return
+  if (!updatesEnabled(app.isPackaged, __MEETINGLY_DISABLE_UPDATES__)) {
+    if (app.isPackaged) deps.logger.info("updater", "disabled at build time")
+    return
+  }
   const feed = (process.env.MEETINGLY_UPDATE_URL || FEED_URL).replace(/\/+$/, "")
   const launchedAt = Date.now()
   const installNow = () => Date.now() - launchedAt < LAUNCH_WINDOW_MS && !deps.isBusy()

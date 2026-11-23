@@ -80,6 +80,15 @@ describe("own key helpers", () => {
     expect(reasoningFor("openai/o4-mini")).toEqual({ reasoning_effort: "low" })
     expect(reasoningFor("gpt-4.1-mini")).toEqual({})
     expect(reasoningFor("llama3.2")).toEqual({})
+    expect(reasoningFor("qwen3.5:4b", "https://openrouter.ai/api/v1")).toEqual({})
+    expect(reasoningFor("gpt-5.5", "https://api.openai.com/v1")).toEqual({ reasoning_effort: "low" })
+  })
+
+  it("turns thinking off for every model on Ollama, so answers are not spent on reasoning", () => {
+    expect(reasoningFor("qwen3.5:4b", "http://localhost:11434/v1")).toEqual({ reasoning_effort: "none" })
+    expect(reasoningFor("llama3.1:8b", "http://127.0.0.1:11434/v1/")).toEqual({ reasoning_effort: "none" })
+    expect(reasoningFor("qwen3", "http://my-ollama.lan:8080/v1")).toEqual({ reasoning_effort: "none" })
+    expect(reasoningFor("qwen3", "not a url")).toEqual({})
   })
 
   it("words provider errors, and the relay wording leaves them alone", () => {
@@ -116,6 +125,13 @@ describe("OwnKeyService", () => {
     expect(seen[1].auth).toBe("Bearer sk-test")
     expect(settings.get().ownKey?.model).toBe("zeta")
     await expect(service.models({ baseUrl: "http://127.0.0.1:1/v1", key: "" })).rejects.toThrow()
+  })
+
+  it("checks an Ollama model with thinking off", async () => {
+    const ollama = "http://ollama.test:11434/v1"
+    const toTestServer: typeof fetch = (input, init) => fetch(String(input).replace(ollama, base), init)
+    await new OwnKeyService({ settings: store(), box, fetch: toTestServer }).save({ baseUrl: ollama, key: "", model: "qwen3.5:4b" })
+    expect(seen[0].body.reasoning_effort).toBe("none")
   })
 
   it("saves nothing when the provider refuses", async () => {
