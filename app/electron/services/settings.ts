@@ -161,6 +161,10 @@ export function normalize(s: Settings): Settings {
       s.ownKey && typeof s.ownKey.baseUrl === "string" && /^https?:\/\//i.test(s.ownKey.baseUrl) && typeof s.ownKey.model === "string" && s.ownKey.model
         ? { baseUrl: s.ownKey.baseUrl, model: s.ownKey.model, key: typeof s.ownKey.key === "string" ? s.ownKey.key : "" }
         : null,
+    fallback:
+      s.fallback && typeof s.fallback.baseUrl === "string" && /^https?:\/\//i.test(s.fallback.baseUrl) && typeof s.fallback.model === "string" && s.fallback.model.trim()
+        ? { baseUrl: s.fallback.baseUrl, model: s.fallback.model.trim() }
+        : null,
     outputLanguage: LANGUAGES.some((l) => l.code === s.outputLanguage) ? s.outputLanguage : "en",
     audioLanguage: LANGUAGES.some((l) => l.code === s.audioLanguage) ? s.audioLanguage : "en",
     transcriptionEngine: s.transcriptionEngine === "cloud" ? "cloud" : "local",
