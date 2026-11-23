@@ -203,6 +203,14 @@ export interface Settings {
   cloud: import("./cloud").CloudAccount | null
   /** The user's own OpenAI-compatible endpoint; when set, AI requests go there instead of the relay. Never synced. */
   ownKey: OwnKey | null
+  /** A keyless model (Ollama on this computer) that answers when the own key or the relay fails. Never synced. */
+  fallback: FallbackModel | null
+}
+
+/** An OpenAI-compatible endpoint without a key, e.g. http://localhost:11434/v1 with an Ollama model. */
+export interface FallbackModel {
+  baseUrl: string
+  model: string
 }
 
 export interface OwnKey {
@@ -304,7 +312,8 @@ export const DEFAULT_SETTINGS: Settings = {
   activePromptId: DEFAULT_PROMPT.id,
   shortcuts: DEFAULT_SHORTCUTS,
   cloud: null,
-  ownKey: null
+  ownKey: null,
+  fallback: null
 }
 
 /** Settings as seen by the renderer, plus resolved facts about the environment. */

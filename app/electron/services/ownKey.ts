@@ -35,13 +35,22 @@ function isOllama(baseUrl: string): boolean {
   }
 }
 
+/** DeepSeek's own API (not its models through another provider). */
+function isDeepSeek(baseUrl: string): boolean {
+  try {
+    return /(^|\.)deepseek\.com$/i.test(new URL(baseUrl).hostname)
+  } catch {
+    return false
+  }
+}
+
 /**
  * gpt-5.x and o-series models think before answering; low effort keeps answers fast. Other models reject the field,
  * except on Ollama, which accepts "none" for every model and otherwise lets thinking models (qwen3...) spend the
- * whole answer on reasoning.
+ * whole answer on reasoning, and on DeepSeek, whose models think at high effort unless told "none".
  */
 export function reasoningFor(model: string, baseUrl = ""): { reasoning_effort?: "low" | "none" } {
-  if (isOllama(baseUrl)) return { reasoning_effort: "none" }
+  if (isOllama(baseUrl) || isDeepSeek(baseUrl)) return { reasoning_effort: "none" }
   const name = model.split("/").pop() ?? model
   return /^(gpt-5|o[1-9])/i.test(name) ? { reasoning_effort: "low" } : {}
 }
